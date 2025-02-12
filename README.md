@@ -1,4 +1,5 @@
 # tlr_reporting
 
-Created to automate failure mode / week / month reporting.
-Outputs are charts.
+Created to automate failure mode / week / month reporting
+Input is a specific .xlsx file
+Outputs are charts
