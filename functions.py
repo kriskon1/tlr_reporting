@@ -57,11 +57,9 @@ def top5_month_sort(L2_SVS):
 
 
 def top5_month_chart_bar_sum(merged_L2_SVS_top5_by_month):
-    # Assign unique colors to each error type
     unique_errors_month = merged_L2_SVS_top5_by_month['error'].unique()
     color_map = dict(zip(unique_errors_month, plt.cm.tab20.colors[:len(unique_errors_month)]))
 
-    # Plot the errors for each month, using error names as x-axis labels
     fig, ax = plt.subplots(figsize=(14, 10))
 
     x_positions = []  # Store modified x-axis positions
@@ -69,79 +67,65 @@ def top5_month_chart_bar_sum(merged_L2_SVS_top5_by_month):
     gap = 0  # Extra space for every 5th element
 
     for i, (index, row) in enumerate(merged_L2_SVS_top5_by_month.iterrows()):
-        if i % 5 == 0 and i != 0:  # Add space after every 5th bar
+        if i % 5 == 0 and i != 0:
             gap += 1
 
-        x_pos = i + gap  # Adjust position by gap count
+        x_pos = i + gap
         x_positions.append(x_pos)
-        x_labels.append(f"{row['month']} - {row['error']}")  # Month + Error
+        x_labels.append(f"{row['month']} - {row['error']}")
 
         color = color_map[row['error']]
         ax.bar(x_pos, row.iloc[4], color=color, label=row['error'])
 
-    # Set x-ticks to modified positions, ensuring labels match the bars
     ax.set_xticks(x_positions)
     ax.set_xticklabels(x_labels, rotation=90, ha='right')
 
-    # Handle the legend (remove duplicate labels)
     handles, labels = ax.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     ax.legend(by_label.values(), by_label.keys(), title='Failure Types')
 
-    # Set title and labels
     plt.title('Top 5 Failures by Month')
     plt.xlabel('Failures')
     plt.ylabel('TLR')
-
     plt.tight_layout()
     plt.show()
 
 
 def top5_month_chart_line_sum(merged_L2_SVS_top5_by_month):
-    # Assign unique colors to each error type
     unique_errors = merged_L2_SVS_top5_by_month['error'].unique()
     color_map = dict(zip(unique_errors, plt.cm.tab20.colors[:len(unique_errors)]))
 
-    # Create figure and axis
     fig, ax = plt.subplots(figsize=(14, 10))
 
-    # Convert 'month' column to string to ensure correct plotting
     merged_L2_SVS_top5_by_month['month'] = merged_L2_SVS_top5_by_month['month'].astype(str)
 
-    # Plot each error type as a separate line
     for error in unique_errors:
         error_data = merged_L2_SVS_top5_by_month[merged_L2_SVS_top5_by_month['error'] == error]
         ax.plot(error_data["month"], error_data["TLR"], label=error, color=color_map[error], marker='o', linestyle='-')
 
-    # Set x-axis labels properly
     plt.xticks(merged_L2_SVS_top5_by_month["month"].unique(), rotation=45)
 
-    # Add legend
     plt.legend(title='Error Types')
 
-    # Set title and labels
     plt.title('Top 5 Failures by Month')
     plt.xlabel('Month')
     plt.ylabel('TLR')
-
     plt.tight_layout()
     plt.show()
 
 
 def top5_month_chart_line_failure_mode(merged_L2_SVS_top5_by_month):
     unique_errors_month = merged_L2_SVS_top5_by_month['error'].unique().tolist()
-    # Plot a separate chart for each unique error
+
     for error in unique_errors_month:
-        # Filter data for the current error
         error_data = merged_L2_SVS_top5_by_month[merged_L2_SVS_top5_by_month['error'] == error]
 
-        # Plot the TLR values for the error over months
         plt.figure(figsize=(5, 3))
         plt.plot(error_data["month"], error_data['TLR'], marker='o')
         plt.title(f'TLR Trend for {error}')
         plt.xlabel('Month')
         plt.ylabel('TLR')
-        plt.xticks(error_data["month"].unique(), rotation=45)  # Ensure all months are displayed on x-axis
+        plt.xticks(error_data["month"].unique(), rotation=45)
         plt.show()
 
 
@@ -160,67 +144,55 @@ def top5_week_sort(L2_SVS):
         0)
     merged_L2_SVS_top5_by_week_num["TLR"] = merged_L2_SVS_top5_by_week_num["TLR"].fillna(0).astype(int)
 
-    # Filter out rows from the current week onwards
+    # Filter out rows for current and future weeks
     current_week_tuple = (datetime.today().year, datetime.today().isocalendar()[1])
 
     # Convert 'week' column from string to (year, week) tuples
     merged_L2_SVS_top5_by_week_num['week_tuple'] = merged_L2_SVS_top5_by_week_num['week'].apply(
-        lambda x: tuple(map(int, x.split('-'))))  # Convert "YYYY-WW" -> (YYYY, WW))
+        lambda x: tuple(map(int, x.split('-'))))
 
-    # Filter out rows for current and future weeks
     merged_L2_SVS_top5_by_week_num = merged_L2_SVS_top5_by_week_num[
         merged_L2_SVS_top5_by_week_num['week_tuple'] < current_week_tuple]
     merged_L2_SVS_top5_by_week_num = merged_L2_SVS_top5_by_week_num.drop(columns=['week_tuple'])
 
     # Filter out rows with 0 TLR values
-
-    # merged_L2_SVS_top5_by_week_num.iloc[253:266, :]
     merged_L2_SVS_top5_by_week_num.set_index(merged_L2_SVS_top5_by_week_num.columns[0], inplace=True)
 
     return merged_L2_SVS_top5_by_week_num
 
 
 def top5_week_chart_bar_sum(merged_L2_SVS_top5_by_week_num):
-    # Assign unique colors to each error type
     unique_errors_week = merged_L2_SVS_top5_by_week_num['error'].unique()
     colormap = plt.get_cmap('tab20b', len(unique_errors_week))
     color_map = {error: colormap(i) for i, error in enumerate(unique_errors_week)}
 
-    # Plot the errors for each week, using error names as x-axis labels
     fig, ax = plt.subplots(figsize=(40, 18))
 
-    # Prepare a list for bar positions and labels to account for gaps
-    x_positions = []  # To store the positions of bars
-    x_labels = []  # To store the corresponding labels for bars
-    gap = 0  # Initialize index for plotting bars
+    x_positions = []
+    x_labels = []
+    gap = 0
 
     for i, (index, row) in enumerate(merged_L2_SVS_top5_by_week_num.iterrows()):
         if i % 5 == 0 and i != 0:
             gap += 1
 
-        x_pos = i + gap  # Adjust position by gap count
+        x_pos = i + gap
         x_positions.append(x_pos)
-        x_labels.append(f"{index} - {row['error']}")  # Week + Error
+        x_labels.append(f"{index} - {row['error']}")
 
         color = color_map[row['error']]
-        ax.bar(x_pos, row["TLR"], color=color, label=row['error'])  # Use gap instead of i for positioning
+        ax.bar(x_pos, row["TLR"], color=color, label=row['error'])
 
-    # Set x-ticks to the positions of the bars
     ax.set_xticks(x_positions)
-
-    # Set the corresponding labels for the x-ticks
     ax.set_xticklabels(x_labels, rotation=90)
 
-    # Handle the legend
     handles, labels = ax.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     ax.legend(by_label.values(), by_label.keys(), title='Error Types')
 
-    # Set title and labels
     plt.title('Top 5 Failures by Week with Gaps')
     plt.xlabel('Failures')
     plt.ylabel('TLR')
-
     plt.tight_layout()
     plt.show()
 
@@ -230,7 +202,6 @@ def top5_week_chart_line_sum(merged_L2_SVS_top5_by_week_num):
         # Reset the index to bring 'week_num' back as a column
         merged_L2_SVS_top5_by_week_column = merged_L2_SVS_top5_by_week_num.reset_index()
 
-    # Assign unique colors to each error type
     unique_errors_week = merged_L2_SVS_top5_by_week_column['error'].unique()
     colormap = plt.get_cmap('tab20b', len(unique_errors_week))
     color_map = {error: colormap(i) for i, error in enumerate(unique_errors_week)}
@@ -239,38 +210,29 @@ def top5_week_chart_line_sum(merged_L2_SVS_top5_by_week_num):
     week_mapping = {week: i for i, week in enumerate(merged_L2_SVS_top5_by_week_column["week"].unique())}
     merged_L2_SVS_top5_by_week_column["week_numeric"] = merged_L2_SVS_top5_by_week_column["week"].map(week_mapping)
 
-    # Create figure
     fig, ax = plt.subplots(figsize=(14, 10))
 
-    # Plot lines using numeric x-values
     for error in unique_errors_week:
         error_data = merged_L2_SVS_top5_by_week_column[merged_L2_SVS_top5_by_week_column['error'] == error]
         ax.plot(error_data["week_numeric"], error_data["TLR"], label=error, color=color_map.get(error), marker='o')
 
-    # Set x-axis labels using the original weeks
     ax.set_xticks(list(week_mapping.values()))
     ax.set_xticklabels(list(week_mapping.keys()), rotation=45)
 
-    # Handle the legend
     ax.legend(title='Error Types')
 
-    # Set title and labels
     plt.title('Top 5 Errors by Week')
     plt.xlabel('Week Number')
     plt.ylabel('TLR')
-
     plt.tight_layout()
     plt.show()
 
 
 def top5_week_chart_line_failure_mode(merged_L2_SVS_top5_by_week_num):
     unique_errors_week = merged_L2_SVS_top5_by_week_num['error'].unique().tolist()
-    # Plot a separate chart for each unique error
-    for error in unique_errors_week:
-        # Filter data for the current error
-        error_data = merged_L2_SVS_top5_by_week_num[merged_L2_SVS_top5_by_week_num['error'] == error]
 
-        # Plot the TLR values for the error over months
+    for error in unique_errors_week:
+        error_data = merged_L2_SVS_top5_by_week_num[merged_L2_SVS_top5_by_week_num['error'] == error]
         if len(error_data) > 15:
             plt.figure(figsize=(15, 3))
         else:
@@ -279,5 +241,5 @@ def top5_week_chart_line_failure_mode(merged_L2_SVS_top5_by_week_num):
         plt.title(f'TLR Trend for {error}')
         plt.xlabel('Month')
         plt.ylabel('TLR')
-        plt.xticks(error_data.index, rotation=90)  # Ensure all months are displayed on x-axis
+        plt.xticks(error_data.index, rotation=90)
         plt.show()
